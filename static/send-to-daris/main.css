@@ -1,0 +1,56 @@
+html {
+    font-family: "Myriad Set Pro","Helvetica Neue","Helvetica","Arial",sans-serif;
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-size: 1em;
+    line-height: 1.5em;
+    font-weight: 400;
+    letter-spacing: 0em;
+    background-color: #fff;
+    color: #333;
+    font-style: normal;
+}
+
+progress {
+    font-size: .6em;
+    line-height: 1.5em;
+    text-indent: .5em;
+    height: 1.5em;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+tr {
+    border-bottom: 1px solid #ddd;
+}
+
+tr:first-child {
+    border-top: none;
+}
+
+th {
+    line-height: 2.5em;
+}
+
+td {
+    line-height: 2em;
+}
+
+input, textarea, select, button {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -moz-font-feature-settings: 'liga', 'kern';
+    direction: ltr;
+    font-size: 100%;
+}

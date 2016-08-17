@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+{% load static from staticfiles %}
+{% url 'task-status' as svc_url %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sending to DaRIS</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'send-to-daris/main.css' %}">
+    <script type="text/javascript" src="{% static 'send-to-daris/jquery-1.10.2.min.js' %}"></script>
+    <script type="text/javascript">
+    var timerId;
+    var progress = 0;
+    $(document).ready(function() {
+        timerId = setInterval(function(){
+            $.ajax({
+                url: '{{ svc_url }}',
+                method: 'GET',
+                data: {
+                    task_id: '{{ task_id }}',
+                    csrfmiddlewaretoken: '{{csrf_token}}',
+                },
+                success: function (result) {
+                    if (result) {
+                        if (result.state) {
+                            $('#task_state').text(result.state);
+                            if (result.state == 'SUCCESS') {
+                                clearInterval(timerId);
+                                $('#progress_bar').val(100);
+                                $('#progress_txt').text('100%');
+                            } else if (result.state == 'SUCCESS') {
+                                clearInterval(timerId);
+                            } else {
+                                progress = (progress+15)%100;
+                                $('#progress_bar').val(progress);
+                                $('#progress_txt').text('' + progress + '%');
+                            }
+                            if (result.info){
+                                if (result.info.current_activity) {
+                                    $('#current_activity').text(result.info.current_activity);
+                                }
+                                if (result.info.progress) {
+                                    $('#progress').text(result.info.progress);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }, 2000);
+    });
+    $(window).unload(function(){
+        if(timerId) {
+            clearInterval(timerId);
+        }
+    });
+
+
+
+
+    </script>
+    <style type="text/css">
+
+
+    </style>
+</head>
+<body>
+<center>
+    <table style="width:80%;">
+        <thead>
+        <tr>
+            <th colspan="2" style="background-color:#ddd;" align="center">Sending {{object_type}} {{object.pk}} to
+                {{daris_project.server.name}} - project
+                {{daris_project.cid}}...
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td align="right" style="width:30%; font-weight:bold;">State:</td>
+            <td align="left" style="padding-left:5px; padding-right:5px;">
+                <div id="task_state">&nbsp;</div>
+            </td>
+        </tr>
+        <tr>
+            <td align="right" style="width:30%; font-weight:bold;">Current Activity:</td>
+            <td align="left" style="padding-left:5px; padding-right:5px;">
+                <div id="current_activity">&nbsp;</div>
+            </td>
+        </tr>
+        <tr>
+            <td align="right" style="width:30%; font-weight:bold;">Progress:</td>
+            <td align="left" style="padding-left:5px; padding-right:5px;">
+                <progress id='progress_bar' max="100" value="0" style="width:80%">
+                    <div id="progress_text" style="text-align:center; width:100%;">
+                        0%
+                    </div>
+                </progress>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p style="text-align:center;">
+        <button type="button" onclick="window.history.back();">Go Back</button>
+    </p>
+</center>
+
+</body>
+</html>

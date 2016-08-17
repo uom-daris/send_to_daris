@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+{% load static from staticfiles %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Send {{object_type}} {{object_id}} to DaRIS</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'send-to-daris/main.css' %}">
+    <script type="text/javascript">
+        function send_to_daris() {
+            var es = document.getElementsByName('daris_project_pk');
+            var daris_project_pk;
+            for (var i = 0; i < es.length; i++) {
+                if (es[i].type == "radio" && es[i].checked) {
+                    daris_project_pk = es[i].value;
+                }
+            }
+            window.location= '{{request.path}}to/project/' + daris_project_pk + '/';
+        }
+
+    </script>
+</head>
+<body>
+<center>
+    <form>
+        <table style="width:80%;">
+            <thead>
+            <tr>
+                <th style="background-color:#ddd; padding-left:1em;" align="left">
+                    [Send {{object_type}} {{object_id}} to DaRIS] Select the target DaRIS Project:
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for daris_project in daris_project_list %}
+            <tr>
+                <td align="left" style="padding-left:5px; padding-right:5px;">
+                    <input type="radio" name="daris_project_pk" value="{{daris_project.pk}}"
+                           {%if forloop.first%}checked{%endif%}>
+                    {{daris_project.cid}}
+                    {% if daris_project.name %}: {{daris_project.name}}{% endif %}
+                    [{{daris_project.server.name}}]
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </form>
+    <p style="text-align:center;">
+        <button type="button"
+                onclick="send_to_daris();">Send
+        </button>
+    </p>
+</center>
+</body>
+</html>
