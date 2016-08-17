@@ -18,6 +18,7 @@ logger = get_task_logger(__name__)
 def send_experiment(experiment_id, daris_project_id, host_addr):
     try:
         experiment = Experiment.objects.get(pk=experiment_id)
+        daris_project = DarisProject.objects.get(pk=daris_project_id)
         datasets = Dataset.objects.filter(experiments=experiment)
         thandle, tpath = _create_temp_file('experiment', experiment_id)
         logger.warning('src: ' + _generate_experiment_source_url(host_addr, experiment))
@@ -44,19 +45,27 @@ def send_experiment(experiment_id, daris_project_id, host_addr):
 @task(name='send_dataset_to_daris')
 def send_dataset(dataset_id, daris_project_id, host_addr):
     try:
-        thandle, tpath = _create_temp_file('dataset', dataset_id)
+        dataset = Dataset.objects.get(pk=dataset_id)
+        daris_project = DarisProject.objects.get(pk=daris_project_id)
+        source = _generate_dataset_source_url(host_addr, dataset)
         try:
-            with WZipFile(tpath, 'w', ZIP_STORED, allowZip64=True) as wzipfile:
-                dataset = Dataset.objects.get(pk=dataset_id)
-                datafiles = DataFile.objects.filter(dataset=dataset)
-                for datafile in datafiles:
-                    _add_to_zipfile(wzipfile, datafile)
-            logger.warning('created zip file: ' + tpath)
-            # TODO
+            logger.warning('creating zip archive for dataset ' + dataset_id)
+            temp_archive = _create_temp_dataset_archive(dataset)
+            logger.warning('created zip archive for dataset ' + dataset_id)
+            logger.warning('connecting to daris')
+            cxn = _connect_daris(daris_project)
+            logger.warning('connected to daris')
+            try:
+                logger.warning('sending dataset to daris')
+                _send_dataset(cxn, dataset, temp_archive, source)
+                logger.warning('sent dataset to daris')
+            finally:
+                logger.warning('disconnecting daris')
+                cxn.disconnect()
+                logger.warning('disconnected daris')
         finally:
-            if tpath:
-                logger.warning('deleting zip file: ' + tpath)
-                os.remove(tpath)
+            logger.warning('removing temporary file: ' + temp_archive)
+            os.remove(temp_archive)
     except:
         raise
 
@@ -64,23 +73,22 @@ def send_dataset(dataset_id, daris_project_id, host_addr):
 @task(name='send_datafile_to_daris')
 def send_datafile(datafile_id, daris_project_id, host_addr):
     try:
-        thandle, tpath = _create_temp_file('datafile', datafile_id)
+        datafile = DataFile.objects.get(pk=datafile_id)
+        daris_project = DarisProject.objects.get(pk=daris_project_id)
+        source = _generate_dataset_source_url(host_addr, datafile)
+        logger.warning('connecting to daris')
+        cxn = _connect_daris(daris_project)
+        logger.warning('connected to daris')
         try:
-            with WZipFile(tpath, 'w', ZIP_STORED, allowZip64=True) as wzipfile:
-                datafile = DataFile.objects.get(pk=datafile_id)
-                _add_to_zipfile(wzipfile, datafile)
-            logger.warning('created zip file: ' + tpath)
-            # TODO
+            logger.warning('sending datafile ' + datafile.filename + ' to daris')
+            _send_dataset(cxn, datafile, source)
+            logger.warning('sent datafile ' + datafile.filename + ' to daris')
         finally:
-            if tpath:
-                logger.warning('deleting zip file: ' + tpath)
-                os.remove(tpath)
+            logger.warning('disconnecting daris')
+            cxn.disconnect()
+            logger.warning('disconnected daris')
     except:
         raise
-
-
-def _create_temp_file(object_type, object_id):
-    return tempfile.mkstemp('.zip', 'send_' + object_type + '_' + object_id + '_to_daris_', )
 
 
 def _generate_experiment_source_url(host_addr, experiment):
@@ -121,10 +129,25 @@ def _create_daris_dataset(daris_project_id):
     daris_server = daris_project.server
 
 
-def _connect_daris(daris_project_id):
-    daris_project = DarisProject.objects.get(pk=daris_project_id)
+def _create_temp_dataset_archive(dataset):
+    _, path = tempfile.mkstemp('.zip', 'send_dataset_' + dataset.pk + '_to_daris_', )
+    with WZipFile(path, 'w', ZIP_STORED, allowZip64=True) as wzipfile:
+        datafiles = DataFile.objects.filter(dataset=dataset)
+        for datafile in datafiles:
+            _add_to_zipfile(wzipfile, datafile)
+    return path
+
+
+def _send_dataset(cxn, dataset, archive, source):
+    pass
+
+
+def _send_datafile(cxn, datafile, source):
+    pass
+
+
+def _connect_daris(daris_project):
     daris_server = daris_project.server
     cxn = mfclient.MFConnection(daris_server.host, daris_server.port, daris_server.transport.lower() == 'https')
     cxn.connect(token=daris_project.token)
     return cxn
-
