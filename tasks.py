@@ -14,7 +14,7 @@ logger = get_task_logger(__name__)
 
 
 @task(name='send_experiment_to_daris')
-def send_experiment(experiment_id, daris_project_id, host_addr, dicom_only=False):
+def send_experiment(experiment_id, daris_project_id, host_addr):
     try:
         experiment = Experiment.objects.get(pk=experiment_id)
         datasets = Dataset.objects.filter(experiments=experiment)
@@ -25,7 +25,7 @@ def send_experiment(experiment_id, daris_project_id, host_addr, dicom_only=False
         try:
             for dataset in datasets:
                 logger.warning('creating zip archive for dataset ' + dataset.pk)
-                temp_archive = _zip_dataset(dataset, dicom_only=dicom_only)
+                temp_archive = _zip(dataset)
                 logger.warning('created zip archive for dataset ' + dataset.pk)
                 try:
                     logger.warning('sending dataset ' + dataset.pk + ' to daris')
@@ -44,12 +44,12 @@ def send_experiment(experiment_id, daris_project_id, host_addr, dicom_only=False
 
 
 @task(name='send_dataset_to_daris')
-def send_dataset(dataset_id, daris_project_id, host_addr, dicom_only=False):
+def send_dataset(dataset_id, daris_project_id, host_addr):
     try:
         dataset = Dataset.objects.get(pk=dataset_id)
         daris_project = DarisProject.objects.get(pk=daris_project_id)
         logger.warning('creating zip archive for dataset ' + dataset_id)
-        temp_archive = _zip_dataset(dataset, dicom_only=dicom_only)
+        temp_archive = _zip(dataset)
         logger.warning('created zip archive for dataset ' + dataset_id)
         try:
             logger.warning('connecting to daris')
@@ -101,19 +101,6 @@ def _zip(dataset, func=None):
                     arcname = os.path.join(datafile.directory if datafile.directory else '', datafile.filename)
                     wzipfile.writeobj(file_object, datafile.size, arcname, date_time=datafile.modification_time)
     return path
-
-
-def _zip_dataset(dataset, dicom_only=False):
-    if dicom_only:
-        def matches(datafile):
-            mimetype = datafile.mimetype
-            filename = datafile.filename
-            return mimetype == 'application/dicom' or 'dicom' in filename.lower() or filename.lower().endswith(
-                '.dcm') or filename.lower().endswith('.dcm.gz') or filename.lower().endswith('.dcm.zip')
-
-        return _zip(dataset, func=matches)
-    else:
-        return _zip(dataset, func=None)
 
 
 def _send_dataset(cxn, dataset, archive, host_addr, daris_project):
