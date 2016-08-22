@@ -89,3 +89,27 @@ A plugin app for MyTardis (Django) to send data to DaRIS
  
   - 3) Edit **tardis/tardis_portal/templates/tardis_portal/view_dataset.html**
     - a) Back up **tardis/tardis_portal/templates/tardis_portal/view_dataset.html**
+    - b) Find the following code block:
+         ```
+         {% if push_to_enabled and is_authenticated %}
+         <a class="btn btn-mini btn-primary" title="Push to..."
+            onclick="window.open('{{ push_to_url }}', 'push-to', 'width=800, height=600'); return false;"
+            href="{{ push_to_url }}" target="_blank">
+           <i class="icon-upload"></i>
+           Push to...
+         </a>
+         {% endif %}
+         ```
+
+         Insert following code right after above block:
+         ```
+         {% if send_to_daris_enabled and is_authenticated %}
+         <a class="btn btn-mini btn-primary" title="Send to DaRIS..."
+            onclick="window.open('{{ send_to_daris_url }}', 'Send to DaRIS', 'width=800, height=600'); return false;"
+            href="{{ send_to_daris_url }}" target="_blank">
+           <i class="icon-upload"></i>
+           Send to DaRIS...
+         </a>
+         {% endif %}
+         ```
+6. Restart MyTardis web server and celeryd
