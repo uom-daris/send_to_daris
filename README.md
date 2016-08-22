@@ -13,6 +13,8 @@ A plugin app for MyTardis (Django) to send data to DaRIS
 4. Initialise the static resources for the web portal
   * `python mytardis.py collectstatic`
 5. Insert UI elements to MyTardis web portal
-  - Edit tardis/tardis_portal/views/pages.py 
+  - Edit **tardis/tardis_portal/views/pages.py**
+    - `from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)`
+    - `from tardis.apps.send_to_daris.config import SendToDaRISConfig`
   - Edit tardis/tardis_portal/templates/view_experiment.html
   - Edit tardis/tardis_portal/templates/view_dataset.html
