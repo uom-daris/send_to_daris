@@ -13,15 +13,15 @@ A plugin app for MyTardis (Django) to send data to DaRIS
 4. Initialise the static resources for the web portal
   * `python mytardis.py collectstatic`
 5. Insert UI elements to MyTardis web portal
-  - Edit **tardis/tardis_portal/views/pages.py**
-    - 1) Make a backup for file **tardis/tardis_portal/views/pages.py**
-    - 2) At the start of the file, import the plugin app moudles:
+  - 1) Edit **tardis/tardis_portal/views/pages.py**
+    - a) Make a backup for file **tardis/tardis_portal/views/pages.py**
+    - b) At the start of the file, import the plugin app moudles:
          ```python
          # Import required plugin modules
          from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)
          from tardis.apps.send_to_daris.config import SendToDaRISConfig
          ```
-    - 3) Find the following code block:
+    - c) Find the following code block:
          ```python
          # Enables UI elements for the push_to app
          if c['push_to_enabled']:
@@ -39,7 +39,7 @@ A plugin app for MyTardis (Django) to send data to DaRIS
          if c['send_to_daris_enabled']:
             c['send_to_daris_url'] = reverse(send_dataset, kwargs={'dataset_id': dataset.pk})
          ```
-    - 4) Find the following code block:
+    - d) Find the following code block:
          ```python
          # Enables UI elements for the push_to app
          c['push_to_enabled'] = PushToConfig.name in settings.INSTALLED_APPS
