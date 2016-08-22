@@ -15,11 +15,10 @@ A plugin app for MyTardis (Django) to send data to DaRIS
 5. Insert UI elements to MyTardis web portal
   - Edit **tardis/tardis_portal/views/pages.py**
     - a. at the top of the moudle:
-
-```python
-from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)
-from tardis.apps.send_to_daris.config import SendToDaRISConfig
-```
+         ```python
+         from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)
+         from tardis.apps.send_to_daris.config import SendToDaRISConfig
+         ```
 
     - b. 
   - Edit tardis/tardis_portal/templates/view_experiment.html
