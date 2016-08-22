@@ -1,5 +1,5 @@
 # send_to_daris
-A plugin app for MyTardis (Django) to send data to DaRIS
+A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data to [DaRIS](https://github.com/uom-daris/daris).
 
 ## Installation
 
@@ -112,4 +112,8 @@ A plugin app for MyTardis (Django) to send data to DaRIS
          </a>
          {% endif %}
          ```
-6. Restart MyTardis web server and celeryd
+6. Restart MyTardis web server and celeryd. Login to MyTardis, in Experiment view or Dataset view, you should see **'Send to DaRIS...** button.
+
+## Configuration
+1. Add DaRIS servers.
+2. Add DaRIS projects.
