@@ -40,11 +40,11 @@ def _send_to_daris(request, object_type, object_id, daris_project_id=None):
             result = tasks.send_experiment.delay(object_id, daris_project_id, host_addr)
             obj = Experiment.objects.get(pk=object_id)
         elif object_type == 'dataset':
-            prefix = reverse(send_experiment, kwargs={'dataset_id': object_id})
+            prefix = reverse(send_dataset, kwargs={'dataset_id': object_id})
             result = tasks.send_dataset.delay(object_id, daris_project_id, host_addr)
             obj = Dataset.objects.get(pk=object_id)
         else:
-            prefix = reverse(send_experiment, kwargs={'datafile_id': object_id})
+            prefix = reverse(send_datafile, kwargs={'datafile_id': object_id})
             result = tasks.send_datafile.delay(object_id, daris_project_id, host_addr)
             obj = DataFile.objects.get(pk=object_id)
         context = {

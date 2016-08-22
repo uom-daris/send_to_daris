@@ -572,11 +572,11 @@ class MFConnection(object):
 
 class MFInput(object):
     def __init__(self, path, mime_type=None, calc_csum=False):
+        self.__checksum = None
         if path.startswith('http:') or path.startswith('https:') or path.startswith('ftp:'):
             self.__url = path
             self.__type = None
             self.__length = -1
-            self.__checksum = None
             resp = None
             try:  # probe the mime type and length
                 resp = urllib.urlopen(self.__url).info()
