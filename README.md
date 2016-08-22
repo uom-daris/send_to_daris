@@ -14,13 +14,14 @@ A plugin app for MyTardis (Django) to send data to DaRIS
   * `python mytardis.py collectstatic`
 5. Insert UI elements to MyTardis web portal
   - Edit **tardis/tardis_portal/views/pages.py**
-    - a. At the top of the moudle:
+    - 1) Make a backup for file **tardis/tardis_portal/views/pages.py**
+    - 2) At the start of the file, import the plugin app moudles:
          ```python
+         # Import required plugin modules
          from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)
          from tardis.apps.send_to_daris.config import SendToDaRISConfig
          ```
-
-    - b. Find the follow code block:
+    - 3) Find the following code block:
          ```python
          # Enables UI elements for the push_to app
          if c['push_to_enabled']:
@@ -31,12 +32,31 @@ A plugin app for MyTardis (Django) to send data to DaRIS
                                         kwargs=push_to_args)
          ```
          
-         add the follwing lines:
+         insert the follwing lines right after the block above:
          ```python
-         # send_to_daris
+         # Enable UI elements for send_to_daris plugin app
          c['send_to_daris_enabled'] = SendToDaRISConfig.name in settings.INSTALLED_APPS
          if c['send_to_daris_enabled']:
             c['send_to_daris_url'] = reverse(send_dataset, kwargs={'dataset_id': dataset.pk})
+         ```
+    - 4) Find the following code block:
+         ```python
+         # Enables UI elements for the push_to app
+         c['push_to_enabled'] = PushToConfig.name in settings.INSTALLED_APPS
+         if c['push_to_enabled']:
+             push_to_args = {
+                 'experiment_id': experiment.pk
+             }
+             c['push_to_url'] = reverse(initiate_push_experiment,
+                                       kwargs=push_to_args)
+         ```
+         
+         insert the following line right after the block above:
+         ```python
+         # Enables UI elements for send_to_daris plugin app
+         c['send_to_daris_enabled'] = SendToDaRISConfig.name in settings.INSTALLED_APPS
+         if c['send_to_daris_enabled']:
+             c['send_to_daris_url'] = reverse(send_experiment, kwargs={'experiment_id': experiment.pk})
          ```
 
   - Edit tardis/tardis_portal/templates/view_experiment.html
