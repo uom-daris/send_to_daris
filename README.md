@@ -16,11 +16,11 @@ A plugin app for MyTardis (Django) to send data to DaRIS
   - 1) Edit **tardis/tardis_portal/views/pages.py**
     - a) Make a backup for file **tardis/tardis_portal/views/pages.py**
     - b) At the start of the file, import the plugin app moudles:
-         ```python
-         # Import required plugin modules
-         from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)
-         from tardis.apps.send_to_daris.config import SendToDaRISConfig
-         ```
+      ```python
+      # Import required plugin modules
+      from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)
+      from tardis.apps.send_to_daris.config import SendToDaRISConfig
+      ```
     - c) Find the following code block:
          ```python
          # Enables UI elements for the push_to app
