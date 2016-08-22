@@ -17,7 +17,6 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
     - a) Make a backup for file **tardis/tardis_portal/views/pages.py**
     - b) At the start of the file, import the plugin app moudles:
          ```python
-         # Import required plugin modules
          from tardis.apps.send_to_daris.views import (send_experiment, send_dataset)
          from tardis.apps.send_to_daris.config import SendToDaRISConfig
          ```
@@ -33,7 +32,7 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
                                         kwargs=push_to_args)
          ```
          
-         insert the follwing lines right after the block above:
+         insert the follwing lines right after the code block above:
          ```python
          # Enable UI elements for send_to_daris plugin app
          c['send_to_daris_enabled'] = SendToDaRISConfig.name in settings.INSTALLED_APPS
@@ -75,7 +74,7 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
          {% endif %}
          ```
          
-         Insert the following right after above block:
+         Insert the following right after the above block:
          ```
          {% if send_to_daris_enabled and is_authenticated %}
          <a class="btn btn-mini btn-primary" title="Send to DaRIS..."
@@ -101,7 +100,7 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
          {% endif %}
          ```
 
-         Insert following code right after above block:
+         Insert following code right after the above block:
          ```
          {% if send_to_daris_enabled and is_authenticated %}
          <a class="btn btn-mini btn-primary" title="Send to DaRIS..."
