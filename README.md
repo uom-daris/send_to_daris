@@ -11,3 +11,6 @@ A plugin app for MyTardis (Django) to send data to DaRIS
 
 3. insert UI elements to MyTardis web portal
 
+1. First ordered list item
+2. Another item
+⋅⋅* Unordered sub-list.
