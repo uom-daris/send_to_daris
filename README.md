@@ -118,5 +118,6 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
 
 ## User's Guide
   * See [user's guide](http://nsp.nectar.org.au/resplat-wiki/doku.php?id=data_management:daris:interop:mytardis_plugin_app_send_to_daris#user_s_guide)
-  * We also have a video demo at [Youtube](https://youtu.be/NiUSeb1puig)
+  * We also have a [video demo at youtube](https://youtu.be/NiUSeb1puig)
+
     [![Video Guide](https://img.youtube.com/vi/NiUSeb1puig/0.jpg)](https://www.youtube.com/watch?v=NiUSeb1puig)
