@@ -78,7 +78,7 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
          ```
          {% if send_to_daris_enabled and is_authenticated %}
          <a class="btn btn-mini btn-primary" title="Send to DaRIS..."
-            onclick="window.open('{{ send_to_daris_url }}', 'Send to DaRIS', 'width=800, height=600'); return false;"
+            onclick="window.open('{{ send_to_daris_url }}', 'Send to DaRIS', 'width=800, height=480'); return false;"
             href="{{ send_to_daris_url }}" target="_blank">
            <i class="icon-upload"></i>
            Send to DaRIS...
@@ -104,7 +104,7 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
          ```
          {% if send_to_daris_enabled and is_authenticated %}
          <a class="btn btn-mini btn-primary" title="Send to DaRIS..."
-            onclick="window.open('{{ send_to_daris_url }}', 'Send to DaRIS', 'width=800, height=600'); return false;"
+            onclick="window.open('{{ send_to_daris_url }}', 'Send to DaRIS', 'width=800, height=480'); return false;"
             href="{{ send_to_daris_url }}" target="_blank">
            <i class="icon-upload"></i>
            Send to DaRIS...
@@ -114,5 +114,7 @@ A plugin app for [MyTardis](https://github.com/mytardis/mytardis) to send data t
 6. Restart MyTardis web server and celeryd. Login to MyTardis, in Experiment view or Dataset view, you should see **'Send to DaRIS...** button.
 
 ## Configuration
-1. Add DaRIS servers.
-2. Add DaRIS projects.
+  * See [how to configure the remote DaRIS server and projects to send data to](http://nsp.nectar.org.au/resplat-wiki/doku.php?id=data_management:daris:interop:mytardis_plugin_app_send_to_daris#configuration)
+
+## User's Guide
+  * See [user's guide](http://nsp.nectar.org.au/resplat-wiki/doku.php?id=data_management:daris:interop:mytardis_plugin_app_send_to_daris#user_s_guide)
