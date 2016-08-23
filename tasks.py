@@ -19,20 +19,28 @@ def send_experiment(experiment_id, daris_project_id, host_addr):
         experiment = Experiment.objects.get(pk=experiment_id)
         datasets = Dataset.objects.filter(experiments=experiment).order_by('pk')
         daris_project = DarisProject.objects.get(pk=daris_project_id)
-        logger.warning('connecting to daris')
+        msg = 'connecting to daris'
+        logger.warning(msg)
+        send_experiment.update_state(state='STARTED', meta={'current_activity': msg})
         cxn = _connect_daris(daris_project)
         logger.warning('connected to daris')
         try:
             for dataset in datasets:
-                logger.warning('creating zip archive for dataset ' + str(dataset.pk))
+                msg = 'creating zip archive for dataset ' + str(dataset.pk)
+                logger.warning(msg)
+                send_experiment.update_state(state='STARTED', meta={'current_activity': msg})
                 temp_archive = _zip(dataset)
                 logger.warning('created zip archive for dataset ' + str(dataset.pk))
                 try:
-                    logger.warning('sending dataset ' + str(dataset.pk) + ' to daris')
+                    msg = 'sending dataset ' + str(dataset.pk) + ' to daris'
+                    logger.warning(msg)
+                    send_experiment.update_state(state='STARTED', meta={'current_activity': msg})
                     _send_dataset(cxn, dataset, temp_archive, host_addr, daris_project, async=False)
                     logger.warning('sent dataset ' + str(dataset.pk) + ' to daris')
                 finally:
-                    logger.warning('removing temporary file: ' + temp_archive)
+                    msg = 'removing temporary file: ' + temp_archive
+                    logger.warning(msg)
+                    send_experiment.update_state(state='STARTED', meta={'current_activity': msg})
                     os.remove(temp_archive)
                     logger.warning('removed temporary file: ' + temp_archive)
         finally:
@@ -48,15 +56,21 @@ def send_dataset(dataset_id, daris_project_id, host_addr):
     try:
         dataset = Dataset.objects.get(pk=dataset_id)
         daris_project = DarisProject.objects.get(pk=daris_project_id)
-        logger.warning('creating zip archive for dataset ' + str(dataset_id))
+        msg = 'creating zip archive for dataset ' + str(dataset_id)
+        logger.warning(msg)
+        send_dataset.update_state(state='STARTED', meta={'current_activity': msg})
         temp_archive = _zip(dataset)
         logger.warning('created zip archive for dataset ' + str(dataset_id))
         try:
-            logger.warning('connecting to daris')
+            msg = 'connecting to daris'
+            logger.warning(msg)
+            send_dataset.update_state(state='STARTED', meta={'current_activity': msg})
             cxn = _connect_daris(daris_project)
             logger.warning('connected to daris')
             try:
-                logger.warning('sending dataset ' + str(dataset.pk) + ' to daris')
+                msg = 'sending dataset ' + str(dataset.pk) + ' to daris'
+                logger.warning(msg)
+                send_dataset.update_state(state='STARTED', meta={'current_activity': msg})
                 _send_dataset(cxn, dataset, temp_archive, host_addr, daris_project, async=True)
                 logger.warning('sent dataset ' + str(dataset.pk) + ' to daris')
             finally:
@@ -64,7 +78,9 @@ def send_dataset(dataset_id, daris_project_id, host_addr):
                 cxn.disconnect()
                 logger.warning('disconnected daris')
         finally:
-            logger.warning('removing temporary file: ' + temp_archive)
+            msg = 'removing temporary file: ' + temp_archive
+            logger.warning(msg)
+            send_dataset.update_state(state='STARTED', meta={'current_activity': msg})
             os.remove(temp_archive)
             logger.warning('removed temporary file: ' + temp_archive)
     except:

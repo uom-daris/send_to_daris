@@ -8,8 +8,8 @@ def load_initial_data(apps, schema_editor):
     DarisServer = apps.get_model("send_to_daris", "DarisServer")
     if not DarisServer.objects.filter(name='VicNode Daris').exists():
         DarisServer(name='VicNode DaRIS', host='mediaflux.vicnode.org.au', port=443, transport='https').save()
-    if not DarisServer.objects.filter(name='Local Daris').exists():
-        DarisServer(name='Local DaRIS', host='localhost', port=8086, transport='http').save()
+#    if not DarisServer.objects.filter(name='Local Daris').exists():
+#        DarisServer(name='Local DaRIS', host='localhost', port=8086, transport='http').save()
 
 
 def unload_initial_data(apps, schema_editor):

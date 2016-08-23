@@ -27,21 +27,21 @@
                                 clearInterval(timerId);
                                 $('#progress_bar').val(100);
                                 $('#progress_txt').text('100%');
-                            } else if (result.state == 'SUCCESS') {
-                                clearInterval(timerId);
+                                $('#current_activity').text('Complete!');
                             } else {
                                 progress = (progress+15)%100;
                                 $('#progress_bar').val(progress);
                                 $('#progress_txt').text('' + progress + '%');
-                            }
-                            if (result.info){
-                                if (result.info.current_activity) {
-                                    $('#current_activity').text(result.info.current_activity);
+                                if (result.info){
+                                    if (result.info.current_activity) {
+                                        $('#current_activity').text(result.info.current_activity);
+                                    }
+                                    if (result.info.progress) {
+                                        $('#progress').text(result.info.progress);
+                                    }
                                 }
-                                if (result.info.progress) {
-                                    $('#progress').text(result.info.progress);
-                                }
                             }
+
                         }
                     }
                 }
