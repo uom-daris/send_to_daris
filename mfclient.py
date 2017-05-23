@@ -857,7 +857,7 @@ class MFResponse(object):
                     if n > 0:
                         f.write(bytes_received)
                         f.flush()
-                        print('written: ' + str(n))
+                        #print('written: ' + str(n))
                     while n < length:
                         data = sock.recv(BUFFER_SIZE)
                         if not data:
@@ -870,7 +870,7 @@ class MFResponse(object):
                             bytes_received = data[length - n:]
                             n = length
                         f.flush()
-                        print('written: ' + str(n))
+                        #print('written: ' + str(n))
                 else:
                     f.write(bytes_received[0:length])
                     bytes_received = bytes_received[length:]
@@ -883,7 +883,7 @@ class MFResponse(object):
             self._result = rxe.element('reply/result')
         else:
             assert reply_type == 'error'
-            self._error = rxe.element('reply/error')
+            self._error = rxe.element('reply')
 
     def __recv_header(self, sock):
         # receive header
