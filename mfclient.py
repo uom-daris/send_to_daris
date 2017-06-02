@@ -11,6 +11,7 @@ import socket
 import ssl
 import base64
 import time
+import re
 
 
 def get_xml_header(version='1.0', encoding='UTF-8'):
@@ -88,6 +89,11 @@ class XmlElement(object):
         if xpath is None:
             return self._elem.text
         else:
+            nss = re.findall(r'[$/]?([^/]+?):', xpath)
+            if nss:
+                for ns in nss:
+                    if ns not in self._nsmap:
+                        return None
             idx = xpath.rfind('/@')
             if idx == -1:
                 return self._elem.findtext(xpath, default=default, namespaces=self._nsmap)
@@ -144,6 +150,11 @@ class XmlElement(object):
                 return [self._elem.text]
             else:
                 return None
+        nss = re.findall(r'[$/]?([^/]+?):', xpath)
+        if nss:
+            for ns in nss:
+                if ns not in self._nsmap:
+                    return None
         idx = xpath.rfind('/@')
         if idx == -1:
             ses = self._elem.findall(xpath, self._nsmap)
@@ -159,6 +170,11 @@ class XmlElement(object):
             ses = list(self._elem)
             return XmlElement(elem=ses[0]) if ses else None
         else:
+            nss = re.findall(r'[$/]?([^/]+?):', xpath)
+            if nss:
+                for ns in nss:
+                    if ns not in self._nsmap:
+                        return None
             idx = xpath.rfind('/@')
             if idx != -1:
                 raise ValueError('Invalid element xpath: ' + xpath)
@@ -172,6 +188,11 @@ class XmlElement(object):
             if ses:
                 return [XmlElement(elem=se) for se in ses]
         else:
+            nss = re.findall(r'[$/]?([^/]+?):', xpath)
+            if nss:
+                for ns in nss:
+                    if ns not in self._nsmap:
+                        return None
             idx = xpath.rfind('/@')
             if idx != -1:
                 raise SyntaxError('invalid element xpath: ' + xpath)
