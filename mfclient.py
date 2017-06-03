@@ -1,25 +1,44 @@
+import base64
 import datetime
 import os
 import re
-import time
-import xml.etree.ElementTree as ElementTree
-import threading
-import urllib
-import os
-import struct
 import socket
 import ssl
-import base64
+import struct
+import threading
 import time
-import re
+import urllib
+import xml.etree.ElementTree as ElementTree
 
 
-def get_xml_header(version='1.0', encoding='UTF-8'):
-    return '<?xml version="' + version + '" encoding="UTF-8"?>'
+def _get_xml_declaration(version='1.0', encoding='UTF-8'):
+    """Gets XML declaration (for the specified version and encoding).
+
+    :param version: XML version
+    :param encoding: encoding
+    :return: XML declaration
+    :rtype: str
+
+    """
+    return '<?xml version="' + version + '" encoding="' + encoding + '"?>'
 
 
 class XmlElement(object):
+    """The class for XML element. It wraps ElementTree.Element object.
+    It has methods to resolve XML element(s) and value(s) for the specified XPATH string.
+    """
+
     def __init__(self, elem=None, name=None, attrib=None, value=None):
+        """
+
+        :param elem: ElementTree.Element object to wrap
+        :type elem: ElementTree.Element
+        :param name: name/tag of the element
+        :type name: str
+        :param attrib: attributes of the element
+        :type attrib: dict
+        :param value: value of the element
+        """
         if elem is not None:
             if name is not None:
                 raise ValueError("Expecting 'elem' or 'name'. Found both.")
@@ -48,6 +67,11 @@ class XmlElement(object):
         self._register_namespace(self._elem)
 
     def _register_namespace(self, elem):
+        """Register the namespace of the element if exists.
+
+        :param elem: the element to register its namespace
+        :return:
+        """
         tag = elem.tag
         if tag.startswith('{'):
             ns = tag[1:tag.rfind('}')]
@@ -57,6 +81,11 @@ class XmlElement(object):
 
     @property
     def tag(self):
+        """ The tag of the element.
+
+        :return: the tag of the element
+        :rtype: str
+        """
         if self._elem.tag.startswith('{'):
             idx = self._elem.tag.find('}')
             ns = self._elem.tag[1:idx]
@@ -67,33 +96,90 @@ class XmlElement(object):
 
     @property
     def attrib(self):
+        """Get attributues of the element.
+
+        :return: attributes of the element
+        :rtype: dict
+
+        """
         return self._elem.attrib.copy()
 
     @property
     def text(self):
+        """ The text value of the element.
+
+        :return: value of the element
+        :rtype: str
+
+        """
         return self._elem.text
 
     def name(self):
+        """The name/tag of the element.
+
+        :return: the name/tag of the element
+        :rtype: str
+        """
         return self.tag
 
     def attributes(self):
+        """Gets the attributes of the element.
+
+        :return: the attributes of the element
+        :rtype: dictionary
+
+        """
         return self.attrib
 
     def attribute(self, name):
+        """Gets the value of the specified attribute.
+
+        :param name: name of the attribute
+        :return: value of the attribute
+        :rtype: str
+
+        """
         return self.attrib.get(name)
 
     def set_attribute(self, name, value):
+        """ Sets the value of the specified attribute.
+
+        :param name: the name of the attribute
+        :param value: the value for the attribute
+        :return:
+
+        """
         self.attrib.set(name, str(value))
 
+    def _contains_unregistered_namespace(self, xpath):
+        """ Checks if the xpath string contains any unregistered namespaces.
+
+        :param xpath: the xpath string
+        :return: True if the xpath string contains namespace that is not registered. False if none.
+        :rtype: bool
+        """
+        nss = re.findall(r'[$/]?([^/]+?):', xpath)
+        if nss:
+            for ns in nss:
+                if ns not in self._nsmap:
+                    return True
+        return False
+
     def value(self, xpath=None, default=None):
+        """Gets the value at the specified xpath. If xpath argument is not given, return the value of the current element.
+
+        :param xpath: xpath
+        :type xpath: str
+        :param default: value to return if node does not exist at the specified xpath
+        :type default: str
+        :return: value of the given xpath, or value of the element if xpath is not given.
+        :rtype: str
+        """
         if xpath is None:
             return self._elem.text
         else:
-            nss = re.findall(r'[$/]?([^/]+?):', xpath)
-            if nss:
-                for ns in nss:
-                    if ns not in self._nsmap:
-                        return None
+            if self._contains_unregistered_namespace(xpath):
+                return None
             idx = xpath.rfind('/@')
             if idx == -1:
                 return self._elem.findtext(xpath, default=default, namespaces=self._nsmap)
@@ -104,6 +190,15 @@ class XmlElement(object):
                     return value if value is not None else default
 
     def int_value(self, xpath=None, default=None, base=10):
+        """Gets the integer value at the specified xpath. If xpath argument is not given, return the value of the current element.
+
+        :param xpath: xpath
+        :type xpath: str
+        :param default: value to return if node does not exist at the specified xpath
+        :type default: int
+        :return: value of the given xpath, or value of the element if xpath is not given.
+        :rtype: int
+        """
         assert default is None or isinstance(default, int)
         value = self.value(xpath)
         if value is not None:
@@ -112,6 +207,15 @@ class XmlElement(object):
             return default
 
     def float_value(self, xpath=None, default=None):
+        """Gets the float value at the specified xpath. If xpath argument is not given, return the value of the current element.
+
+        :param xpath: xpath
+        :type xpath: str
+        :param default: value to return if node does not exist at the specified xpath
+        :type default: float
+        :return: value of the given xpath, or value of the element if xpath is not given.
+        :rtype: float
+        """
         assert default is None or isinstance(default, float)
         value = self.value(xpath)
         if value is not None:
@@ -120,6 +224,15 @@ class XmlElement(object):
             return default
 
     def boolean_value(self, xpath=None, default=None):
+        """Gets the bool value at the specified xpath. If xpath argument is not given, return the value of the current element.
+
+        :param xpath: xpath
+        :type xpath: str
+        :param default: value to return if node does not exist at the specified xpath
+        :type default: bool
+        :return: value of the given xpath, or value of the element if xpath is not given.
+        :rtype: bool
+        """
         assert default is None or isinstance(default, bool)
         value = self.value(xpath)
         if value is not None:
@@ -128,6 +241,15 @@ class XmlElement(object):
             return default
 
     def date_value(self, xpath=None, default=None):
+        """Gets the datetime value at the specified xpath. If xpath argument is not given, return the value of the current element.
+
+        :param xpath: xpath
+        :type xpath: str
+        :param default: value to return if node does not exist at the specified xpath
+        :type default: datetime.datetime
+        :return: value of the given xpath, or value of the element if xpath is not given.
+        :rtype: datetime.datetime
+        """
         assert default is None or isinstance(default, datetime.datetime)
         value = self.value(xpath)
         if value is not None:
@@ -136,6 +258,11 @@ class XmlElement(object):
             return default
 
     def set_value(self, value):
+        """Sets value of the element.
+
+        :param value: the element value.
+        :return:
+        """
         if value is not None:
             if isinstance(value, datetime.datetime):
                 self._elem.text = time.strftime('%d-%b-%Y %H:%M:%S', value)
@@ -145,16 +272,20 @@ class XmlElement(object):
                 self._elem.text = str(value)
 
     def values(self, xpath=None):
+        """Returns values for the given xpath.
+
+        :param xpath: xpath
+        :type xpath: str
+        :return: values for the give xpath
+        :rtype: list
+        """
         if xpath is None:
             if self._elem.text is not None:
                 return [self._elem.text]
             else:
                 return None
-        nss = re.findall(r'[$/]?([^/]+?):', xpath)
-        if nss:
-            for ns in nss:
-                if ns not in self._nsmap:
-                    return None
+        if self._contains_unregistered_namespace(xpath):
+            return None
         idx = xpath.rfind('/@')
         if idx == -1:
             ses = self._elem.findall(xpath, self._nsmap)
@@ -166,15 +297,19 @@ class XmlElement(object):
                 return [se.attrib.get(xpath[idx + 2:]) for se in ses]
 
     def element(self, xpath=None):
+        """Returns the element identified by the given xpath.
+
+        :param xpath: xpath
+        :type xpath: str
+        :return: the element identified by the given xpath
+        :rtype: XmlElement
+        """
         if xpath is None:
             ses = list(self._elem)
             return XmlElement(elem=ses[0]) if ses else None
         else:
-            nss = re.findall(r'[$/]?([^/]+?):', xpath)
-            if nss:
-                for ns in nss:
-                    if ns not in self._nsmap:
-                        return None
+            if self._contains_unregistered_namespace(xpath):
+                return None
             idx = xpath.rfind('/@')
             if idx != -1:
                 raise ValueError('Invalid element xpath: ' + xpath)
@@ -183,16 +318,20 @@ class XmlElement(object):
                 return XmlElement(elem=se)
 
     def elements(self, xpath=None):
+        """Returns the elements identified by the given xpath.
+
+        :param xpath: xpath
+        :type xpath: str
+        :return: the elements identified by the given xpath
+        :rtype: list
+        """
         if xpath is None:
             ses = list(self._elem)
             if ses:
                 return [XmlElement(elem=se) for se in ses]
         else:
-            nss = re.findall(r'[$/]?([^/]+?):', xpath)
-            if nss:
-                for ns in nss:
-                    if ns not in self._nsmap:
-                        return None
+            if self._contains_unregistered_namespace(xpath):
+                return None
             idx = xpath.rfind('/@')
             if idx != -1:
                 raise SyntaxError('invalid element xpath: ' + xpath)
@@ -214,6 +353,11 @@ class XmlElement(object):
             self.add_element(elem._elem, index)
 
     def tostring(self):
+        """Returns the XML string of this element.
+
+        :return: the XML string of the element.
+        :rtype: str
+        """
         for ns in self._nsmap.keys():
             ElementTree.register_namespace(ns, self._nsmap.get(ns))
         te = ElementTree.Element('temp')
@@ -245,6 +389,12 @@ class XmlElement(object):
 
     @classmethod
     def parse(cls, source):
+        """Parses the specified XML document string or file, which must contains a well formed XML document.
+
+        :param source: the source XML string or file.
+        :type source: str or file object
+        :return:
+        """
         assert source is not None
         if os.path.isfile(source):  # text is a file
             tree = ElementTree.parse(source)
@@ -258,7 +408,7 @@ class XmlElement(object):
             return XmlElement(ElementTree.fromstring(str(source)))
 
 
-def _process_attributes(name, attributes):
+def _process_xml_attributes(name, attributes):
     attrib = {}
     # add namespace attribute
     idx = name.find(':')
@@ -277,67 +427,119 @@ def _process_attributes(name, attributes):
 
 
 class XmlStringWriter(object):
+    """The XML string writer is a high-speed creator for XML documents that encodes the output as a string of UTF-8 characters.
+
+    """
+
     def __init__(self, root=None):
-        self.__stack = []
-        self.__items = []
+        """
+
+        :param root: the name of the root element
+        :type root: str
+        """
+        self._stack = []
+        self._items = []
         if root is not None:
             self.push(str(root))
 
     def doc_text(self):
+        """Returns the complete XML document string, automatically popping active elements.
+
+        :return: the complete XML document string
+        :rtype: str
+        """
         self.pop_all()
-        return ''.join(self.__items)
+        return ''.join(self._items)
 
     def doc_elem(self):
+        """ Returns the complete XML document element, authomatically popping active elements.
+
+        :return: the complement XML document element.
+        :rtype: XmlElement
+        """
         return XmlElement.parse(self.doc_text())
 
     def push(self, name, attributes=None):
-        attributes = _process_attributes(name, attributes)
-        self.__stack.append(name)
-        self.__items.append('<')
-        self.__items.append(name)
+        """Pushes an element with attributes and value onto the stack.
+
+        :param name: The name of the element
+        :type name: str
+        :param attributes: The attributes of the element
+        :type attributes: dict
+        :return:
+        """
+        attributes = _process_xml_attributes(name, attributes)
+        self._stack.append(name)
+        self._items.append('<')
+        self._items.append(name)
         for a in attributes.keys():
-            self.__items.append(' ')
-            self.__items.append(a)
-            self.__items.append('="')
-            self.__items.append(attributes[a])
-            self.__items.append('"')
-        self.__items.append('>')
+            self._items.append(' ')
+            self._items.append(a)
+            self._items.append('="')
+            self._items.append(attributes[a])
+            self._items.append('"')
+        self._items.append('>')
 
     def pop(self):
-        name = self.__stack.pop()
-        self.__items.append('</')
-        self.__items.append(name)
-        self.__items.append('>')
+        """Pops the current element from the stack.
+
+        :return:
+        """
+        name = self._stack.pop()
+        self._items.append('</')
+        self._items.append(name)
+        self._items.append('>')
 
     def pop_all(self):
-        while len(self.__stack) > 0:
+        """Pops all the open elements.
+
+        :return:
+        """
+        while len(self._stack) > 0:
             self.pop()
 
     def add(self, name, value, attributes=None):
-        attributes = _process_attributes(name, attributes)
-        self.__items.append('<')
-        self.__items.append(name)
+        """ Add the element with specified value, and attributes.
+
+        :param name: name of the element
+        :type name: str
+        :param value: value of the element
+        :param attributes: attributes of the element
+        :type attributes: dict
+        :return:
+        """
+        attributes = _process_xml_attributes(name, attributes)
+        self._items.append('<')
+        self._items.append(name)
         for a in attributes.keys():
-            self.__items.append(' ')
-            self.__items.append(a)
-            self.__items.append('="')
-            self.__items.append(attributes[a])
-            self.__items.append('"')
-        self.__items.append('>')
-        self.__items.append(str(value))
-        self.__items.append('</')
-        self.__items.append(name)
-        self.__items.append('>')
+            self._items.append(' ')
+            self._items.append(a)
+            self._items.append('="')
+            self._items.append(attributes[a])
+            self._items.append('"')
+        self._items.append('>')
+        self._items.append(str(value))
+        self._items.append('</')
+        self._items.append(name)
+        self._items.append('>')
 
     def add_element(self, element, parent=True):
+        """Adds the given element, associated attributes and all sub-elements.
+
+        :param element: the element
+        :type element: XmlElement or ElementTree.Element
+        :param parent: Controls whether the element itself should be written. If true, then the element is included, otherwise, only sub-elements are written.
+        :type parent: bool
+        :return:
+        """
         if element is None:
             raise ValueError('element is not specified.')
         if isinstance(element, ElementTree.Element) or isinstance(element, XmlElement):
             if parent is True:
                 if isinstance(element, ElementTree.Element):
-                    self.__items.append(XmlElement(element).tostring())
+                    self._items.append(XmlElement(element).tostring())
                 else:
-                    self.__items.append(element.tostring())
+                    self._items.append(element.tostring())
             else:
                 for sub_element in list(element):
                     self.add_element(sub_element, parent=True)
@@ -347,54 +549,110 @@ class XmlStringWriter(object):
 
 
 class XmlDocWriter(object):
+    """This class wraps ElementTree.TreeBuilder to build a XML document.
+
+    """
+
     def __init__(self, root=None):
-        self.__stack = []
-        self.__tb = ElementTree.TreeBuilder()
+        """
+
+        :param root: The name/tag of the root element.
+        :type root: str
+        """
+        self._stack = []
+        self._tb = ElementTree.TreeBuilder()
         if root is not None:
             self.push(root)
 
     def doc_text(self):
+        """Returns the complete XML document string, automatically popping active elements.
+
+        :return: the complete XML document string.
+        :rtype: str
+
+        """
         return str(self.doc_elem())
 
     def doc_elem(self):
+        """ Returns the complete XML document element, authomatically popping active elements.
+
+        :return: the complement XML document element.
+        :rtype: XmlElement
+        """
         self.pop_all()
-        return XmlElement(self.__tb.close())
+        return XmlElement(self._tb.close())
 
     def push(self, name, attributes=None):
-        attributes = _process_attributes(name, attributes)
-        self.__stack.append(name)
-        self.__tb.start(name, attributes)
+        """Pushes an element with attributes and value onto the stack.
+
+        :param name: The name of the element
+        :type name: str
+        :param attributes: The attributes of the element
+        :type attributes: dict
+        :return:
+        """
+        attributes = _process_xml_attributes(name, attributes)
+        self._stack.append(name)
+        self._tb.start(name, attributes)
 
     def pop(self):
-        name = self.__stack.pop()
+        """Pops the current element from the stack.
+
+        :return:
+        """
+        name = self._stack.pop()
         if name is not None:
-            self.__tb.end(name)
+            self._tb.end(name)
 
     def pop_all(self):
-        while len(self.__stack) > 0:
+        """Pops all the open elements.
+
+        :return:
+        """
+        while len(self._stack) > 0:
             self.pop()
 
     def add(self, name, value, attributes=None):
-        attributes = _process_attributes(name, attributes)
-        self.__tb.start(name, attributes)
-        self.__tb.data(str(value))
-        self.__tb.end(name)
+        """ Add the element with specified value, and attributes.
+
+        :param name: name of the element
+        :type name: str
+        :param value: value of the element
+        :param attributes: attributes of the element
+        :type attributes: dict
+        :return:
+        """
+        attributes = _process_xml_attributes(name, attributes)
+        self._tb.start(name, attributes)
+        self._tb.data(str(value))
+        self._tb.end(name)
 
     def add_element(self, element, parent=True):
+        """Adds the given element, associated attributes and all sub-elements.
+
+        :param element: the element
+        :type element: XmlElement or ElementTree.Element
+        :param parent: Controls whether the element itself should be written. If true, then the element is included, otherwise, only sub-elements are written.
+        :type parent: bool
+        :return:
+        """
         if element is None:
             raise ValueError('element is not specified.')
         if isinstance(element, ElementTree.Element) or isinstance(element, XmlElement):
             if parent is True:
-                self.__tb.start(element.tag, element.attrib)
+                self._tb.start(element.tag, element.attrib)
                 if element.text is not None:
-                    self.__tb.data(element.text)
+                    self._tb.data(element.text)
             for sub_element in list(element):
                 self.add_element(sub_element, parent=True)
             if parent is True:
-                self.__tb.end(element.tag)
+                self._tb.end(element.tag)
         else:
             self.add_element(ElementTree.fromstring(str(element)), parent)
 
+
+##############################################################################
+# Mediaflux Client                                                           #
 ##############################################################################
 
 BUFFER_SIZE = 8192
@@ -768,14 +1026,14 @@ class MFRequest(object):
                     w.add('csum', str(mi.checksum()))
                 w.pop()
         w.pop()
-        return get_xml_header() + w.doc_text()
+        return _get_xml_declaration() + w.doc_text()
 
     @property
     def length(self):
-        length = long(0)
+        length = 0L
         for packet in self.__packets:
             if packet.length == -1:
-                return long(-1)
+                return -1L
             length += 16
             if packet.type:
                 length += len(packet.type.encode('utf-8'))
@@ -878,7 +1136,7 @@ class MFResponse(object):
                     if n > 0:
                         f.write(bytes_received)
                         f.flush()
-                        #print('written: ' + str(n))
+                        # print('written: ' + str(n))
                     while n < length:
                         data = sock.recv(BUFFER_SIZE)
                         if not data:
@@ -891,7 +1149,7 @@ class MFResponse(object):
                             bytes_received = data[length - n:]
                             n = length
                         f.flush()
-                        #print('written: ' + str(n))
+                        # print('written: ' + str(n))
                 else:
                     f.write(bytes_received[0:length])
                     bytes_received = bytes_received[length:]
