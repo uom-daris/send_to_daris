@@ -11,6 +11,10 @@ import urllib
 import xml.etree.ElementTree as ElementTree
 
 
+##############################################################################
+# XML                                                                        #
+##############################################################################
+
 def _get_xml_declaration(version='1.0', encoding='UTF-8'):
     """Gets XML declaration (for the specified version and encoding).
 
@@ -149,7 +153,7 @@ class XmlElement(object):
         :return:
 
         """
-        self.attrib.set(name, str(value))
+        self._elem.attrib.set(name, str(value))
 
     def _contains_unregistered_namespace(self, xpath):
         """ Checks if the xpath string contains any unregistered namespaces.
@@ -190,12 +194,15 @@ class XmlElement(object):
                     return value if value is not None else default
 
     def int_value(self, xpath=None, default=None, base=10):
-        """Gets the integer value at the specified xpath. If xpath argument is not given, return the value of the current element.
+        """Gets the integer value at the specified xpath. If xpath argument is not given, return the value of the
+        current element.
 
         :param xpath: xpath
         :type xpath: str
         :param default: value to return if node does not exist at the specified xpath
         :type default: int
+        :param base: the radix base to use.
+        :type base: int
         :return: value of the given xpath, or value of the element if xpath is not given.
         :rtype: int
         """
@@ -241,7 +248,8 @@ class XmlElement(object):
             return default
 
     def date_value(self, xpath=None, default=None):
-        """Gets the datetime value at the specified xpath. If xpath argument is not given, return the value of the current element.
+        """Gets the datetime value at the specified xpath. If xpath argument is not given, return the value of the
+        current element.
 
         :param xpath: xpath
         :type xpath: str
@@ -427,7 +435,8 @@ def _process_xml_attributes(name, attributes):
 
 
 class XmlStringWriter(object):
-    """The XML string writer is a high-speed creator for XML documents that encodes the output as a string of UTF-8 characters.
+    """The XML string writer is a high-speed creator for XML documents that encodes the output as a string of UTF-8
+    characters.
 
     """
 
@@ -528,7 +537,8 @@ class XmlStringWriter(object):
 
         :param element: the element
         :type element: XmlElement or ElementTree.Element
-        :param parent: Controls whether the element itself should be written. If true, then the element is included, otherwise, only sub-elements are written.
+        :param parent: Controls whether the element itself should be written. If true, then the element is included,
+        otherwise, only sub-elements are written.
         :type parent: bool
         :return:
         """
@@ -632,7 +642,8 @@ class XmlDocWriter(object):
 
         :param element: the element
         :type element: XmlElement or ElementTree.Element
-        :param parent: Controls whether the element itself should be written. If true, then the element is included, otherwise, only sub-elements are written.
+        :param parent: Controls whether the element itself should be written. If true, then the element is included,
+        otherwise, only sub-elements are written.
         :type parent: bool
         :return:
         """
