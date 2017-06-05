@@ -687,7 +687,7 @@ class MFConnection(object):
             cls._SEQUENCE_GENERATOR = sequence_generator
 
     @classmethod
-    def __next_sequence_id(cls):
+    def _next_sequence_id(cls):
         with cls._LOCK:
             cls._SEQUENCE_ID += 1
             return cls._SEQUENCE_ID
@@ -721,7 +721,7 @@ class MFConnection(object):
     def session(self):
         return self._session
 
-    def __open_socket(self):
+    def _open_socket(self):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.settimeout(self._timeout)
         if self._proxy is not None:
@@ -755,7 +755,7 @@ class MFConnection(object):
         if self._encrypt:
             self._sock = ssl.wrap_socket(self._sock)
 
-    def __close_socket(self):
+    def _close_socket(self):
         if self._sock is not None:
             self._sock.close()
             self._sock = None
@@ -810,15 +810,15 @@ class MFConnection(object):
 
     def execute(self, service, args=None, inputs=None, outputs=None, route=None, emode=None):
         sgen = MFConnection.sequence_generator()
-        seq = MFConnection.__next_sequence_id()
+        seq = MFConnection._next_sequence_id()
         # create request message
         request = MFRequest(sgen, seq, service, args, inputs, outputs, route, emode, self._session,
                             (self._token, self._token_type), self._app, self._protocols, self._compress)
         try:
             # open socket
-            self.__open_socket()
+            self._open_socket()
             # send http header
-            self.__send_http_header(request.length)
+            self._send_http_header(request.length)
             # send http request
             request.send(self._sock)
             # receive http response
@@ -828,9 +828,9 @@ class MFConnection(object):
                 raise ExHttpResponse(str(response.error))
             return response.result
         finally:
-            self.__close_socket()
+            self._close_socket()
 
-    def __send_http_header(self, content_length):
+    def _send_http_header(self, content_length):
         header = 'POST '
         if self._encrypt:
             header += 'https://'
@@ -862,16 +862,16 @@ class MFConnection(object):
 
 class MFInput(object):
     def __init__(self, path, mime_type=None, calc_csum=False):
-        self.__checksum = None
+        self._checksum = None
         if path.startswith('http:') or path.startswith('https:') or path.startswith('ftp:'):
-            self.__url = path
-            self.__type = None
-            self.__length = -1
+            self._url = path
+            self._type = None
+            self._length = -1
             resp = None
             try:  # probe the mime type and length
-                resp = urllib.urlopen(self.__url).info()
-                self.__type = resp.type
-                self.__length = long(resp.getheaders('Content-Length')[0])
+                resp = urllib.urlopen(self._url).info()
+                self._type = resp.type
+                self._length = long(resp.getheaders('Content-Length')[0])
             except:
                 pass
             finally:
@@ -880,29 +880,29 @@ class MFInput(object):
         else:
             if path.startswith('file:'):
                 path = path[5:]
-            self.__url = 'file:' + os.path.abspath(path)
-            self.__type = mime_type
-            self.__length = os.path.getsize(path)
+            self._url = 'file:' + os.path.abspath(path)
+            self._type = mime_type
+            self._length = os.path.getsize(path)
             if calc_csum:
-                self.__checksum = crc32(path)
+                self._checksum = _crc32(path)
 
     def type(self):
-        return self.__type
+        return self._type
 
     def set_type(self, mime_type):
-        self.__type = mime_type
+        self._type = mime_type
 
     def length(self):
-        return self.__length
+        return self._length
 
     def url(self):
-        return self.__url
+        return self._url
 
     def checksum(self):
-        return self.__checksum
+        return self._checksum
 
     def set_checksum(self, checksum):
-        self.__checksum = checksum
+        self._checksum = checksum
 
 
 class MFOutput(object):
@@ -961,10 +961,10 @@ class MFRequest(object):
             return self._compress
 
         def send(self, sock, remaining):
-            self.__send_header(sock, remaining)
-            self.__send_content(sock)
+            self._send_header(sock, remaining)
+            self._send_content(sock)
 
-        def __send_header(self, sock, remaining):
+        def _send_header(self, sock, remaining):
             header = '\x01'
             header += '\x01' if self._compress else '\x00'
             assert len(header) == 2
@@ -982,7 +982,7 @@ class MFRequest(object):
                 header += mime_type
             sock.sendall(header)
 
-        def __send_content(self, sock):
+        def _send_content(self, sock):
             if self._bytes is not None:
                 sock.sendall(self._bytes)
             elif self._url is not None:
@@ -998,20 +998,20 @@ class MFRequest(object):
     def __init__(self, sgen, seq, service, args=None, inputs=None, outputs=None, route=None, emode=None, session=None,
                  token=None, app=None,
                  protocols=None, compress=False):
-        self.__packets = []
+        self._packets = []
         # service request/message packet
-        xml = self.__create_request_xml(sgen, seq, service, args, inputs, outputs, route, emode, session,
-                                        token, app, protocols)
-        self.__packets.append(MFRequest.Packet(string=xml, mime_type='text/xml', compress=compress))
+        xml = self._create_request_xml(sgen, seq, service, args, inputs, outputs, route, emode, session,
+                                       token, app, protocols)
+        self._packets.append(MFRequest.Packet(string=xml, mime_type='text/xml', compress=compress))
         if inputs is not None:
             for mi in inputs:
-                self.__packets.append(
+                self._packets.append(
                     MFRequest.Packet(url=mi.url(), length=mi.length(), mime_type=mi.type(),
                                      compress=False))
 
     @classmethod
-    def __create_request_xml(cls, sgen, seq, service, args=None, inputs=None, outputs=None, route=None, emode=None,
-                             session=None, token=None, app=None, protocols=None):
+    def _create_request_xml(cls, sgen, seq, service, args=None, inputs=None, outputs=None, route=None, emode=None,
+                            session=None, token=None, app=None, protocols=None):
         assert emode is None or emode == 'distributed-first' or emode == 'distributed-all'
         w = XmlStringWriter('request')
         if protocols is not None:
@@ -1042,7 +1042,7 @@ class MFRequest(object):
     @property
     def length(self):
         length = 0L
-        for packet in self.__packets:
+        for packet in self._packets:
             if packet.length == -1:
                 return -1L
             length += 16
@@ -1052,16 +1052,16 @@ class MFRequest(object):
         return length
 
     def send(self, sock):
-        remaining = len(self.__packets) - 1
-        for packet in self.__packets:
+        remaining = len(self._packets) - 1
+        for packet in self._packets:
             packet.send(sock, remaining)
             remaining -= 1
 
     def __getitem__(self, index):
-        return self.__packets.__getitem__(index)
+        return self._packets.__getitem__(index)
 
     def __len__(self):
-        return self.__packets.__len__()
+        return self._packets.__len__()
 
 
 class MFResponse(object):
@@ -1090,7 +1090,7 @@ class MFResponse(object):
         return self._error
 
     def recv(self, sock):
-        bytes_received = self.__recv_header(sock)
+        bytes_received = self._recv_header(sock)
         pkt_idx = 0  # packet index
         while True:
             bytes_length = len(bytes_received)
@@ -1105,7 +1105,7 @@ class MFResponse(object):
             pkt_remaining = struct.unpack('>i', bytes_received[10:14])[0]
             pkt_mime_type_length = struct.unpack('>h', bytes_received[14:16])[0]
             if pkt_mime_type_length <= 0:
-                bytes_received = self.__recv_packet(sock, pkt_idx, pkt_length, None, bytes_received, pkt_remaining)
+                bytes_received = self._recv_packet(sock, pkt_idx, pkt_length, None, bytes_received, pkt_remaining)
                 pkt_idx += 1
             else:
                 if bytes_length < (16 + pkt_mime_type_length):
@@ -1117,13 +1117,13 @@ class MFResponse(object):
                         continue
                 pkt_mime_type = bytes_received[16:16 + pkt_mime_type_length]
                 bytes_received = bytes_received[16 + pkt_mime_type_length:]
-                bytes_received = self.__recv_packet(sock, pkt_idx, pkt_length, pkt_mime_type, bytes_received,
-                                                    pkt_remaining)
+                bytes_received = self._recv_packet(sock, pkt_idx, pkt_length, pkt_mime_type, bytes_received,
+                                                   pkt_remaining)
                 pkt_idx += 1
             if pkt_remaining == 0:
                 break
 
-    def __recv_packet(self, sock, idx, length, mime_type, bytes_received, remaining):
+    def _recv_packet(self, sock, idx, length, mime_type, bytes_received, remaining):
         n = len(bytes_received)
         if idx == 0:  # first packet: result/error xml
             while len(bytes_received) < length:
@@ -1131,7 +1131,7 @@ class MFResponse(object):
                 if not data:
                     raise ExHttpResponse('Incomplete packet ' + idx + '.')
                 bytes_received += data
-            self.__parse_reply(bytes_received[0:length])
+            self._parse_reply(bytes_received[0:length])
             bytes_received = bytes_received[length:]
             # now check outputs
             nb_outputs = len(self._outputs)
@@ -1166,7 +1166,7 @@ class MFResponse(object):
                     bytes_received = bytes_received[length:]
         return bytes_received
 
-    def __parse_reply(self, text):
+    def _parse_reply(self, text):
         rxe = XmlElement.parse(text)
         reply_type = rxe.value('reply/@type')
         if reply_type == 'result':
@@ -1175,7 +1175,7 @@ class MFResponse(object):
             assert reply_type == 'error'
             self._error = rxe.element('reply')
 
-    def __recv_header(self, sock):
+    def _recv_header(self, sock):
         # receive header
         header = ''
         bytes_received = ''
@@ -1195,7 +1195,7 @@ class MFResponse(object):
         if not completed:
             raise ExHttpResponse('Failed to receive http header. Incomplete header: ' + header)
         # parse header fields
-        self.__parse_header(header)
+        self._parse_header(header)
         # handle status code
         if not self._http_status_code:
             raise ExHttpResponse("Invalid http response: missing status code.")
@@ -1232,7 +1232,7 @@ class MFResponse(object):
                     'Invalid HTTP/' + self._http_version + ' response: ' + self._http_status_code + ' ' +
                     self._http_status_message + '.')
 
-    def __parse_header(self, header):
+    def _parse_header(self, header):
         lines = header.split('\r\n')
         idx1 = lines[0].find('HTTP/') + 5
         idx2 = lines[0].find(' ', idx1)
@@ -1260,7 +1260,7 @@ class ExProxyAuthenticationRequired(Exception):
     pass
 
 
-def crc32(path):
+def _crc32(path):
     from zlib import crc32
     with open(path, 'r') as f:
         crc = crc32('')
